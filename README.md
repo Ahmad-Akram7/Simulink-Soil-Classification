@@ -60,7 +60,8 @@ Let's test the models with a sample clay soil.
       <img width="1827" height="912" alt="image" src="https://github.com/user-attachments/assets/5c228b42-5e5e-4666-9a87-ea5e52b304e5" />
 
     -   **AASHTO Model Output**: `'A-7-6'`
-    ![Uploading image.png…]()
+    <img width="1827" height="912" alt="image" src="https://github.com/user-attachments/assets/37b04fb4-e28c-40a4-b4a6-5f2a90635c71" />
+
 
 This demonstrates that the models are working as expected for this soil type.
 
