@@ -57,7 +57,10 @@ Let's test the models with a sample clay soil.
     -   Plastic Limit: `28`
 -   **Results:**
     -   **USCS Model Output**: `'CH'`
+      <img width="1827" height="912" alt="image" src="https://github.com/user-attachments/assets/5c228b42-5e5e-4666-9a87-ea5e52b304e5" />
+
     -   **AASHTO Model Output**: `'A-7-6'`
+    ![Uploading image.png…]()
 
 This demonstrates that the models are working as expected for this soil type.
 
