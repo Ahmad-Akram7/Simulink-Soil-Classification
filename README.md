@@ -3,7 +3,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A collection of simple Simulink models for classifying soil according to the **USCS (Unified Soil Classification System)** and **AASHTO (American Association of State Highway and Transportation Officials)** systems. This project is intended as an educational tool for civil engineering students and a quick reference for professionals.
+# Simulink Soil Classification Models
+[![MATLAB](https://img.shields.io/badge/MATLAB-R2023b+-blue.svg)](https://www.mathworks.com/products/matlab.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+| System | Standard | Inputs |
+| :--- | :--- | :--- |
+| **USCS** | ASTM D2487 | % Passing #200, LL, PL |
+| **AASHTO** | M 145 | % Passing #200, LL, PL |
 ## Features
 
 -   **USCS Model**: Classifies fine-grained soils based on laboratory test results.
