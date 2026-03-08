@@ -1,81 +1,272 @@
-# Simulink Soil Classification Models for Civil Engineering
+<div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<br/>
 
-A collection of simple Simulink models for classifying soil according to the **USCS (Unified Soil Classification System)** and **AASHTO (American Association of State Highway and Transportation Officials)** systems. This project is intended as an educational tool for civil engineering students and a quick reference for professionals.
-# Simulink Soil Classification Models
-[![MATLAB](https://img.shields.io/badge/MATLAB-R2023b+-blue.svg)](https://www.mathworks.com/products/matlab.html)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+```
+ ____  _____  ____  __      ___   __   ____  ____  ____  ____
+/ ___)(  _  )(_  _)(  )    / __) (  ) (  __)(_  _)(_  _)(_  _)
+\___ \ )(_)(  _)(_  )(__  ( (__   )(   ) _)   )(    )(   _)(_
+(____/(_____)(____)(____)  \___) (__) (__)   (__)  (__) (____) 
+```
 
-| System | Standard | Inputs |
-| :--- | :--- | :--- |
-| **USCS** | ASTM D2487 | % Passing #200, LL, PL |
-| **AASHTO** | M 145 | % Passing #200, LL, PL |
-## Features
+# 🪨 Simulink Soil Classification Models
 
--   **USCS Model**: Classifies fine-grained soils based on laboratory test results.
--   **AASHTO Model**: Classifies soils to assess their suitability for road and highway construction.
--   **Ready to Use**: No need to generate the models. Just open the `.slx` files and run the simulation.
+**USCS & AASHTO Soil Classification — Powered by MATLAB/Simulink**
 
-## Getting Started
+[![MATLAB](https://img.shields.io/badge/MATLAB-R2023b%2B-0076A8?style=for-the-badge&logo=mathworks&logoColor=white)](https://www.mathworks.com/products/matlab.html)
+[![Simulink](https://img.shields.io/badge/Simulink-R2023b%2B-e60000?style=for-the-badge&logo=mathworks&logoColor=white)](https://www.mathworks.com/products/simulink.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Standard: ASTM D2487](https://img.shields.io/badge/Standard-ASTM%20D2487-f59e0b?style=for-the-badge)]()
+[![Standard: AASHTO M145](https://img.shields.io/badge/Standard-AASHTO%20M145-8b5cf6?style=for-the-badge)]()
 
-To use these models, you will need **MATLAB** and **Simulink**.
+*An educational toolkit for civil engineers and students — classify soils in seconds, straight from Simulink.*
 
-### 1. Clone the Repository
+[📦 Get Started](#-getting-started) · [📐 Models](#-models-overview) · [🧪 Example](#-example-run) · [🤝 Contributing](#-contributing)
 
-First, clone this repository to your local machine using Git:
+</div>
+
+---
+
+## 📌 What Is This?
+
+This repository provides **two plug-and-play Simulink models** that classify soil samples using the two most widely used geotechnical standards:
+
+| Model | Standard | Purpose |
+|-------|----------|---------|
+| 🟦 **USCS** | ASTM D2487 | Fine-grained soil classification (CH, CL, MH, ML…) |
+| 🟧 **AASHTO** | AASHTO M 145 | Highway subgrade suitability (A-1 through A-7-6) |
+
+Both models accept the same three laboratory inputs and instantly output a standardized soil group symbol — no coding required.
+
+> **Who is this for?**
+> - 🎓 Civil engineering students learning soil mechanics
+> - 🏗️ Geotechnical engineers wanting a fast sanity-check tool
+> - 🧑‍🏫 Instructors looking for visual, interactive teaching aids
+
+---
+
+## ⚡ Getting Started
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- [MATLAB R2023b+](https://www.mathworks.com/products/matlab.html)
+- [Simulink](https://www.mathworks.com/products/simulink.html) (included with most MATLAB licenses)
+
+### 1 — Clone the Repository
 
 ```bash
 git clone https://github.com/Ahmad-Akram7/Simulink-Soil-Classification.git
+cd Simulink-Soil-Classification
 ```
 
-### 2. Run a Simulation
+### 2 — Open a Model
 
-1.  Open either the `USCS_Model/USCS_Soil_Model.slx` or `AASHTO_Model/AASHTO_Soil_Model.slx` file in Simulink.
-2.  On the left side of the model, you will find three `Constant` blocks:
-    -   `PercentPassing200`
-    -   `LiquidLimit`
-    -   `PlasticLimit`
-3.  Double-click on each block to change the input values for your soil sample.
-4.  Click the **Run (▶)** button in the Simulink toolbar to execute the simulation.
-5.  The resulting soil classification will appear in the **Display** block on the right.
+Navigate to either model folder and open the `.slx` file:
 
-## Models Overview
+```
+USCS_Model/
+└── USCS_Soil_Model.slx   ← Open this in Simulink
 
-### USCS Model
+AASHTO_Model/
+└── AASHTO_Soil_Model.slx ← Or this one
+```
 
-This model takes the percent of soil passing the #200 sieve, the Liquid Limit (LL), and the Plastic Limit (PL) to classify fine-grained soils as 'CH' (high-plasticity clay), 'CL' (low-plasticity clay), 'MH' (high-plasticity silt), or 'ML' (low-plasticity silt).
+### 3 — Set Your Inputs
+
+On the **left side** of the model, locate the three `Constant` input blocks:
+
+| Block Name | Description | Typical Range |
+|---|---|---|
+| `PercentPassing200` | % of soil passing sieve #200 | 0 – 100 |
+| `LiquidLimit` | Atterberg Liquid Limit (LL) | 20 – 100+ |
+| `PlasticLimit` | Atterberg Plastic Limit (PL) | 10 – 60+ |
+
+> 💡 **Tip:** Double-click any `Constant` block to edit its value.
+
+### 4 — Run & Read Output
+
+Click the **▶ Run** button in the Simulink toolbar.  
+The **Display** block on the right shows your classification result immediately.
+
+---
+
+## 📐 Models Overview
+
+### 🟦 USCS Model — `USCS_Soil_Model.slx`
+
+> **Standard:** ASTM D2487 — *Unified Soil Classification System*
+
+Classifies fine-grained soils using plasticity characteristics derived from Atterberg limits.
+
+**Possible Output Symbols:**
+
+| Symbol | Soil Type | Description |
+|--------|-----------|-------------|
+| `CH` | High-plasticity Clay | Expansive, compressible — poor foundation material |
+| `CL` | Low-plasticity Clay | Moderate plasticity, common subgrade soil |
+| `MH` | High-plasticity Silt | Elastic, frost-susceptible |
+| `ML` | Low-plasticity Silt | Low plasticity, frost-susceptible |
+
+**Decision Logic (simplified):**
+
+```
+IF % Passing #200 ≥ 50 → Fine-Grained Soil
+  Plasticity Index (PI) = LL - PL
+  IF LL ≥ 50 → High Plasticity (H)
+  ELSE       → Low Plasticity (L)
+
+  IF plots ABOVE A-line → Clay (C)
+  ELSE                  → Silt (M)
+```
 
 ![USCS Model](Report/USCS%20MODEL.png)
 
-### AASHTO Model
+---
 
-This model uses the same inputs to classify the soil into groups like 'A-7-6', which helps in determining the quality of the soil for use as a subgrade material in pavement structures.
+### 🟧 AASHTO Model — `AASHTO_Soil_Model.slx`
+
+> **Standard:** AASHTO M 145 — *Classification of Soils and Soil-Aggregate Mixtures*
+
+Assesses soil suitability for use as **road subgrade material** in pavement construction.
+
+**Output Groups (A-Scale):**
+
+| Group | Description | Subgrade Quality |
+|-------|-------------|-----------------|
+| `A-1` | Stone fragments, gravel, sand | ⭐⭐⭐ Excellent |
+| `A-2` | Silty or clayey gravel/sand | ⭐⭐⭐ Good |
+| `A-3` | Fine sand | ⭐⭐ Good |
+| `A-4` | Silty soil | ⭐⭐ Fair |
+| `A-5` | Silty soil (elastic) | ⭐ Poor |
+| `A-6` | Clayey soil | ⭐ Poor |
+| `A-7-5` | Clayey soil (elastic) | ⭐ Poor |
+| `A-7-6` | Clayey soil (expansive) | ⭐ Very Poor |
 
 ![AASHTO Model](Report/AASHTO%20MODEL.png)
 
-## Example
+---
 
-Let's test the models with a sample clay soil.
+## 🧪 Example Run
 
--   **Inputs:**
-    -   Percent Passing #200: `60`
-    -   Liquid Limit: `55`
-    -   Plastic Limit: `28`
--   **Results:**
-    -   **USCS Model Output**: `'CH'`
-      <img width="1827" height="912" alt="image" src="https://github.com/user-attachments/assets/5c228b42-5e5e-4666-9a87-ea5e52b304e5" />
+Here's a complete worked example using a high-plasticity clay sample:
 
-    -   **AASHTO Model Output**: `'A-7-6'`
-    <img width="975" height="503" alt="image" src="https://github.com/user-attachments/assets/6a7d74ba-140f-406c-880e-cfa32add7cd7" />
+### Inputs
 
+```yaml
+Percent Passing #200 Sieve:  60%
+Liquid Limit (LL):           55
+Plastic Limit (PL):          28
+Plasticity Index (PI):       27   # Computed: LL - PL
+```
 
-This demonstrates that the models are working as expected for this soil type.
+### Results
 
-## Contributing
+<table>
+<tr>
+<td align="center" width="50%">
 
-Contributions are welcome! If you find a bug or have an idea for an improvement, please feel free to open an issue or submit a pull request.
+**🟦 USCS Output**
 
-## License
+```
+CH
+(High-Plasticity Clay)
+```
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+LL = 55 > 50 → High plasticity  
+PI = 27 → Plots above A-line → Clay
+
+</td>
+<td align="center" width="50%">
+
+**🟧 AASHTO Output**
+
+```
+A-7-6
+(Expansive Clayey Soil)
+```
+
+High fines + high LL + high PI  
+→ Poorest subgrade category
+
+</td>
+</tr>
+</table>
+
+> ✅ Both models correctly identify this as a high-plasticity clay — a soil type that engineers must treat carefully due to its **shrink-swell behavior** and **low bearing capacity**.
+
+---
+
+## 🗂️ Repository Structure
+
+```
+Simulink-Soil-Classification/
+│
+├── 📁 USCS_Model/
+│   └── USCS_Soil_Model.slx          # USCS Simulink model
+│
+├── 📁 AASHTO_Model/
+│   └── AASHTO_Soil_Model.slx        # AASHTO Simulink model
+│
+├── 📁 Report/
+│   ├── USCS MODEL.png               # USCS model screenshot
+│   └── AASHTO MODEL.png             # AASHTO model screenshot
+│
+├── LICENSE                          # MIT License
+└── README.md                        # This file
+```
+
+---
+
+## 🔑 Key Concepts Glossary
+
+| Term | Definition |
+|------|-----------|
+| **Sieve #200** | 0.075 mm opening — separates fine from coarse-grained soils |
+| **Liquid Limit (LL)** | Water content at which soil transitions from plastic to liquid state |
+| **Plastic Limit (PL)** | Water content below which soil behaves as a semi-solid |
+| **Plasticity Index (PI)** | PI = LL − PL; measures the range of plastic behavior |
+| **A-line** | Boundary on the Casagrande plasticity chart separating clays (C) from silts (M) |
+| **USCS** | Unified Soil Classification System — general geotechnical use |
+| **AASHTO** | American Association of State Highway and Transportation Officials standard |
+
+---
+
+## 🤝 Contributing
+
+Contributions are warmly welcomed! Here's how to get involved:
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/coarse-grained-uscs`
+3. **Commit** your changes: `git commit -m 'Add coarse-grained soil classification'`
+4. **Push** to the branch: `git push origin feature/coarse-grained-uscs`
+5. **Open** a Pull Request
+
+### 💡 Ideas for Contributions
+
+- [ ] Add coarse-grained USCS classification (GW, GP, SW, SP…)
+- [ ] Extend AASHTO to include Group Index (GI) calculation
+- [ ] Add a MATLAB Live Script companion for step-by-step walkthroughs
+- [ ] Create a standalone App Designer GUI for non-Simulink users
+- [ ] Add input validation blocks for out-of-range values
+
+Please open an [issue](https://github.com/Ahmad-Akram7/Simulink-Soil-Classification/issues) first for major changes so we can discuss the approach.
+
+---
+
+## 📄 License
+
+This project is released under the **MIT License** — free to use, modify, and distribute.  
+See the [LICENSE](LICENSE) file for full details.
+
+---
+
+<div align="center">
+
+**Built for engineers, by engineers.**  
+If this saved you time, consider ⭐ starring the repo!
+
+*Made with ☕ and a deep appreciation for geotechnical engineering*
+
+</div>
