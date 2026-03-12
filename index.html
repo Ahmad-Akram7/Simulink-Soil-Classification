@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulink Soil Classification — USCS & AASHTO</title>
+    <meta name="description" content="Automated soil classification tool built in MATLAB/Simulink. Implements USCS (ASTM D2487) and AASHTO (M145) standards for geotechnical engineering.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & VARIABLES ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #06070a;
+            --bg-secondary: #0c0d12;
+            --bg-card: #111318;
+            --bg-card-hover: #16181f;
+            --bg-elevated: #1a1c24;
+            --accent-earth: #c49a6c;
+            --accent-clay: #e07a5f;
+            --accent-blue: #5b8def;
+            --accent-cyan: #4ecdc4;
+            --accent-green: #6bcb77;
+            --accent-orange: #f4a261;
+            --accent-red: #e76f51;
+            --accent-purple: #a78bfa;
+            --accent-yellow: #fbbf24;
+            --accent-sand: #ddb892;
+            --text-primary: #e8e8f0;
+            --text-secondary: #9ca3af;
+            --text-muted: #5b5e6b;
+            --border-color: #1f2129;
+            --border-hover: #2d303a;
+            --gradient-earth: linear-gradient(135deg, #c49a6c 0%, #e07a5f 50%, #5b8def 100%);
+            --gradient-uscs: linear-gradient(135deg, #5b8def 0%, #4ecdc4 100%);
+            --gradient-aashto: linear-gradient(135deg, #f4a261 0%, #e07a5f 100%);
+            --gradient-hero: linear-gradient(135deg, #c49a6c 0%, #e07a5f 30%, #5b8def 60%, #4ecdc4 100%);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --shadow-glow-blue: 0 0 40px rgba(91, 141, 239, 0.12);
+            --shadow-glow-earth: 0 0 40px rgba(196, 154, 108, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ===== BACKGROUND EFFECTS ===== */
+        .bg-noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .bg-gradient-top {
+            position: fixed;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(196, 154, 108, 0.08) 0%, rgba(224, 122, 95, 0.04) 40%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-gradient-mid {
+            position: fixed;
+            top: 40%;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(91, 141, 239, 0.06) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-gradient-bottom {
+            position: fixed;
+            bottom: -100px;
+            left: -200px;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(78, 205, 196, 0.05) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(196, 154, 108, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(196, 154, 108, 0.02) 1px, transparent 1px);
+            background-size: 80px 80px;
+        }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        section {
+            padding: 100px 0;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(6, 7, 10, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .navbar.scrolled {
+            background: rgba(6, 7, 10, 0.95);
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 68px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--gradient-earth);
+            border-radius: var(--radius-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-xs);
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+            background: rgba(196, 154, 108, 0.08);
+        }
+
+        .nav-cta {
+            background: var(--accent-earth) !important;
+            color: #06070a !important;
+            padding: 8px 20px !important;
+            font-weight: 700 !important;
+        }
+
+        .nav-cta:hover {
+            background: #d4a87a !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(196, 154, 108, 0.3);
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 68px;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 18px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-badge.uscs {
+            background: rgba(91, 141, 239, 0.1);
+            border: 1px solid rgba(91, 141, 239, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .hero-badge.aashto {
+            background: rgba(244, 162, 97, 0.1);
+            border: 1px solid rgba(244, 162, 97, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .hero-badge.mit {
+            background: rgba(107, 203, 119, 0.1);
+            border: 1px solid rgba(107, 203, 119, 0.2);
+            color: var(--accent-green);
+        }
+
+        .hero-badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .hero-badge.uscs .hero-badge-dot { background: var(--accent-blue); }
+        .hero-badge.aashto .hero-badge-dot { background: var(--accent-orange); }
+        .hero-badge.mit .hero-badge-dot { background: var(--accent-green); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.7); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.6rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.08;
+            margin-bottom: 24px;
+            letter-spacing: -1.5px;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .hero h1 .gradient-text {
+            background: var(--gradient-hero);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 620px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent-earth);
+            color: #06070a;
+            box-shadow: 0 4px 20px rgba(196, 154, 108, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #d4a87a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(196, 154, 108, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-earth);
+            transform: translateY(-2px);
+        }
+
+        .btn-uscs {
+            background: rgba(91, 141, 239, 0.12);
+            color: var(--accent-blue);
+            border: 1px solid rgba(91, 141, 239, 0.25);
+        }
+
+        .btn-uscs:hover {
+            background: rgba(91, 141, 239, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-aashto {
+            background: rgba(244, 162, 97, 0.12);
+            color: var(--accent-orange);
+            border: 1px solid rgba(244, 162, 97, 0.25);
+        }
+
+        .btn-aashto:hover {
+            background: rgba(244, 162, 97, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 56px;
+            margin-top: 72px;
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-earth);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== SECTION HEADERS ===== */
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--accent-earth);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 14px;
+            letter-spacing: -0.5px;
+        }
+
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        /* ===== MODEL COMPARISON ===== */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .model-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .model-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .model-card.uscs::before { background: var(--gradient-uscs); }
+        .model-card.aashto::before { background: var(--gradient-aashto); }
+
+        .model-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .model-card:hover::before {
+            opacity: 1;
+        }
+
+        .model-card-header {
+            padding: 36px 36px 0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .model-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+
+        .model-icon.uscs {
+            background: rgba(91, 141, 239, 0.1);
+            border: 1px solid rgba(91, 141, 239, 0.15);
+        }
+
+        .model-icon.aashto {
+            background: rgba(244, 162, 97, 0.1);
+            border: 1px solid rgba(244, 162, 97, 0.15);
+        }
+
+        .model-card-header-text h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .model-card-header-text .model-standard {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .model-card-body {
+            padding: 24px 36px 36px;
+        }
+
+        .model-card-body p {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .model-outputs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .output-chip {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .output-chip.uscs {
+            background: rgba(91, 141, 239, 0.08);
+            color: var(--accent-blue);
+            border: 1px solid rgba(91, 141, 239, 0.15);
+        }
+
+        .output-chip.aashto {
+            background: rgba(244, 162, 97, 0.08);
+            color: var(--accent-orange);
+            border: 1px solid rgba(244, 162, 97, 0.15);
+        }
+
+        /* ===== INPUTS TABLE ===== */
+        .inputs-section {
+            margin-top: 48px;
+        }
+
+        .input-table-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .input-table-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .input-table-header h3 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .input-table-header .badge {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(196, 154, 108, 0.1);
+            color: var(--accent-earth);
+            border: 1px solid rgba(196, 154, 108, 0.2);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            padding: 14px 28px;
+            text-align: left;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.015);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            padding: 14px 28px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(196, 154, 108, 0.03);
+        }
+
+        .data-table .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        /* ===== HOW IT WORKS / FLOW ===== */
+        .flow-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 48px;
+            margin-top: 48px;
+        }
+
+        .flow-title {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 36px;
+            color: var(--text-primary);
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .flow-node {
+            padding: 18px 28px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-align: center;
+            min-width: 150px;
+            transition: var(--transition);
+            line-height: 1.4;
+        }
+
+        .flow-node:hover { transform: scale(1.05); }
+
+        .flow-node.input {
+            background: rgba(196, 154, 108, 0.1);
+            border: 1px solid rgba(196, 154, 108, 0.2);
+            color: var(--accent-earth);
+        }
+
+        .flow-node.process {
+            background: rgba(91, 141, 239, 0.1);
+            border: 1px solid rgba(91, 141, 239, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .flow-node.decision {
+            background: rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            color: var(--accent-purple);
+            transform: rotate(0deg);
+        }
+
+        .flow-node.output {
+            background: rgba(107, 203, 119, 0.1);
+            border: 1px solid rgba(107, 203, 119, 0.2);
+            color: var(--accent-green);
+        }
+
+        .flow-arrow {
+            font-size: 1.4rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== USCS & AASHTO DETAIL SECTIONS ===== */
+        .detail-section {
+            padding: 80px 0;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+
+        .detail-text h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .detail-text .standard-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .standard-badge.uscs {
+            background: rgba(91, 141, 239, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid rgba(91, 141, 239, 0.2);
+        }
+
+        .standard-badge.aashto {
+            background: rgba(244, 162, 97, 0.1);
+            color: var(--accent-orange);
+            border: 1px solid rgba(244, 162, 97, 0.2);
+        }
+
+        .detail-text p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+
+        .detail-table-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .detail-table-wrap .table-label {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .classification-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .classification-table th {
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.015);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .classification-table td {
+            padding: 12px 20px;
+            font-size: 0.88rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .classification-table tr:hover td {
+            background: rgba(196, 154, 108, 0.03);
+        }
+
+        .symbol-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .symbol-badge.clay { background: rgba(224, 122, 95, 0.12); color: var(--accent-clay); }
+        .symbol-badge.silt { background: rgba(78, 205, 196, 0.12); color: var(--accent-cyan); }
+        .symbol-badge.good { background: rgba(107, 203, 119, 0.12); color: var(--accent-green); }
+        .symbol-badge.fair { background: rgba(251, 191, 36, 0.12); color: var(--accent-yellow); }
+        .symbol-badge.poor { background: rgba(244, 162, 97, 0.12); color: var(--accent-orange); }
+        .symbol-badge.bad { background: rgba(231, 111, 81, 0.12); color: var(--accent-red); }
+
+        .star-rating {
+            color: var(--accent-yellow);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .star-rating .dim { opacity: 0.2; }
+
+        /* ===== LOGIC PSEUDOCODE ===== */
+        .logic-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-top: 24px;
+        }
+
+        .logic-box .logic-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .logic-box pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.9;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+
+        .logic-box .kw { color: var(--accent-purple); font-weight: 600; }
+        .logic-box .op { color: var(--accent-earth); }
+        .logic-box .cm { color: var(--text-muted); }
+        .logic-box .val { color: var(--accent-cyan); }
+        .logic-box .str { color: var(--accent-green); }
+
+        /* ===== EXAMPLE SECTION ===== */
+        .example-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .example-header {
+            padding: 24px 36px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .example-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .example-header .sample-type {
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            background: rgba(224, 122, 95, 0.1);
+            color: var(--accent-clay);
+            border: 1px solid rgba(224, 122, 95, 0.2);
+        }
+
+        .example-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0;
+        }
+
+        .example-col {
+            padding: 32px 36px;
+        }
+
+        .example-col:not(:last-child) {
+            border-right: 1px solid var(--border-color);
+        }
+
+        .example-col-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .example-input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .example-input-row:last-child {
+            border-bottom: none;
+        }
+
+        .example-input-name {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .example-input-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--accent-earth);
+        }
+
+        .example-result {
+            text-align: center;
+            padding-top: 8px;
+        }
+
+        .example-result-symbol {
+            font-size: 2.8rem;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 8px;
+        }
+
+        .example-result-symbol.uscs { color: var(--accent-blue); }
+        .example-result-symbol.aashto { color: var(--accent-orange); }
+
+        .example-result-name {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .example-result-explain {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        /* ===== GLOSSARY ===== */
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .glossary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .glossary-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .glossary-term {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent-earth);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .glossary-def {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ===== GETTING STARTED ===== */
+        .steps-timeline {
+            position: relative;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .steps-timeline::before {
+            content: '';
+            position: absolute;
+            left: 28px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .step-item {
+            position: relative;
+            padding-left: 72px;
+            padding-bottom: 48px;
+        }
+
+        .step-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 10px;
+            top: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--accent-earth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--accent-earth);
+            z-index: 1;
+        }
+
+        .step-item h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step-item p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            margin-top: 40px;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.9;
+            color: var(--text-secondary);
+        }
+
+        .code-block .cm { color: var(--text-muted); }
+        .code-block .cmd { color: var(--accent-green); }
+        .code-block .str { color: var(--accent-orange); }
+        .code-block .kw { color: var(--accent-purple); }
+
+        /* ===== REPO STRUCTURE ===== */
+        .tree-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 32px 36px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 2;
+            color: var(--text-secondary);
+        }
+
+        .tree-block .folder { color: var(--accent-earth); font-weight: 600; }
+        .tree-block .file { color: var(--accent-cyan); }
+        .tree-block .desc { color: var(--text-muted); }
+
+        /* ===== CONTRIBUTING ===== */
+        .contribute-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .contribute-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: var(--transition);
+        }
+
+        .contribute-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .contribute-card h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contribute-card p {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            text-align: center;
+            padding: 80px 0;
+        }
+
+        .cta-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 64px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-earth);
+        }
+
+        .cta-box h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        .cta-box p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-bottom: 32px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            border-top: 1px solid var(--border-color);
+            padding: 48px 0 32px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-earth);
+        }
+
+        .footer-copy {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            line-height: 1.8;
+        }
+
+        .footer-heart { color: var(--accent-red); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .models-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .example-body {
+                grid-template-columns: 1fr;
+            }
+
+            .example-col:not(:last-child) {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 68px;
+                left: 0;
+                right: 0;
+                background: rgba(6, 7, 10, 0.98);
+                backdrop-filter: blur(24px);
+                flex-direction: column;
+                padding: 20px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .hero-stats {
+                gap: 32px;
+            }
+
+            .flow-diagram {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+
+            section {
+                padding: 64px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .hero-badges {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-noise"></div>
+    <div class="bg-gradient-top"></div>
+    <div class="bg-gradient-mid"></div>
+    <div class="bg-gradient-bottom"></div>
+    <div class="bg-grid"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="#" class="nav-brand">
+                <div class="nav-brand-icon">🪨</div>
+                <span>SoilClassify</span>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#models">Models</a></li>
+                <li><a href="#uscs">USCS</a></li>
+                <li><a href="#aashto">AASHTO</a></li>
+                <li><a href="#example">Example</a></li>
+                <li><a href="#glossary">Glossary</a></li>
+                <li><a href="#start">Get Started</a></li>
+                <li><a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification" class="nav-cta" target="_blank">⭐ GitHub</a></li>
+            </ul>
+            <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">☰</button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badges">
+                    <span class="hero-badge uscs"><span class="hero-badge-dot"></span> ASTM D2487</span>
+                    <span class="hero-badge aashto"><span class="hero-badge-dot"></span> AASHTO M145</span>
+                    <span class="hero-badge mit"><span class="hero-badge-dot"></span> MIT License</span>
+                </div>
+                <h1>
+                    Soil Classification<br>
+                    <span class="gradient-text">Powered by Simulink</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Classify soils in seconds using USCS and AASHTO standards. Enter three lab inputs, 
+                    hit Run — get your soil group symbol instantly. No coding required.
+                </p>
+                <div class="hero-actions">
+                    <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification" class="btn btn-primary" target="_blank">
+                        🚀 View Repository
+                    </a>
+                    <a href="#start" class="btn btn-secondary">
+                        📦 Get Started
+                    </a>
+                    <a href="#uscs" class="btn btn-uscs">
+                        🟦 USCS Model
+                    </a>
+                    <a href="#aashto" class="btn btn-aashto">
+                        🟧 AASHTO Model
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">2</div>
+                        <div class="hero-stat-label">Models</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">3</div>
+                        <div class="hero-stat-label">Inputs</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">12+</div>
+                        <div class="hero-stat-label">Soil Classes</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">0</div>
+                        <div class="hero-stat-label">Code Required</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Models Overview -->
+    <section id="models">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">Models</div>
+                <h2 class="section-title">Two Standards, One Toolkit</h2>
+                <p class="section-desc">Both models accept the same three laboratory inputs and output a standardized soil group symbol.</p>
+            </div>
+
+            <div class="models-grid">
+                <!-- USCS Card -->
+                <div class="model-card uscs">
+                    <div class="model-card-header">
+                        <div class="model-icon uscs">🟦</div>
+                        <div class="model-card-header-text">
+                            <h3>USCS Model</h3>
+                            <span class="model-standard">ASTM D2487 — Unified Soil Classification System</span>
+                        </div>
+                    </div>
+                    <div class="model-card-body">
+                        <p>Classifies fine-grained soils using plasticity characteristics derived from Atterberg limits. Uses the Casagrande plasticity chart A-line to distinguish clays from silts.</p>
+                        <div class="model-outputs">
+                            <span class="output-chip uscs">CH</span>
+                            <span class="output-chip uscs">CL</span>
+                            <span class="output-chip uscs">MH</span>
+                            <span class="output-chip uscs">ML</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AASHTO Card -->
+                <div class="model-card aashto">
+                    <div class="model-card-header">
+                        <div class="model-icon aashto">🟧</div>
+                        <div class="model-card-header-text">
+                            <h3>AASHTO Model</h3>
+                            <span class="model-standard">AASHTO M 145 — Highway Subgrade Classification</span>
+                        </div>
+                    </div>
+                    <div class="model-card-body">
+                        <p>Assesses soil suitability for use as road subgrade material in pavement construction. Classifies from excellent (A-1) to very poor (A-7-6) subgrade quality.</p>
+                        <div class="model-outputs">
+                            <span class="output-chip aashto">A-1</span>
+                            <span class="output-chip aashto">A-2</span>
+                            <span class="output-chip aashto">A-3</span>
+                            <span class="output-chip aashto">A-4</span>
+                            <span class="output-chip aashto">A-5</span>
+                            <span class="output-chip aashto">A-6</span>
+                            <span class="output-chip aashto">A-7-5</span>
+                            <span class="output-chip aashto">A-7-6</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shared Inputs -->
+            <div class="inputs-section">
+                <div class="input-table-wrap">
+                    <div class="input-table-header">
+                        <h3>📋 Shared Input Parameters</h3>
+                        <span class="badge">Both Models</span>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Block Name</th>
+                                <th>Description</th>
+                                <th>Typical Range</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight:600;">PercentPassing200</td>
+                                <td>% of soil passing sieve #200</td>
+                                <td class="mono">0 – 100</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600;">LiquidLimit</td>
+                                <td>Atterberg Liquid Limit (LL)</td>
+                                <td class="mono">20 – 100+</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600;">PlasticLimit</td>
+                                <td>Atterberg Plastic Limit (PL)</td>
+                                <td class="mono">10 – 60+</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Flow Diagram -->
+            <div class="flow-section">
+                <div class="flow-title">How Both Models Work</div>
+                <div class="flow-diagram">
+                    <div class="flow-node input">📥 Lab Inputs<br><small>% Pass #200, LL, PL</small></div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-node process">🔢 Compute PI<br><small>PI = LL − PL</small></div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-node decision">🔀 Decision Logic<br><small>A-line / Thresholds</small></div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-node output">📤 Soil Symbol<br><small>CH, A-7-6, etc.</small></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- USCS Detail -->
+    <section id="uscs" class="detail-section">
+        <div class="container">
+            <div class="detail-grid">
+                <div class="detail-text">
+                    <h2>🟦 USCS Classification</h2>
+                    <span class="standard-badge uscs">ASTM D2487</span>
+                    <p>
+                        The Unified Soil Classification System classifies fine-grained soils using plasticity 
+                        characteristics derived from Atterberg limits. It uses the <strong>Casagrande plasticity chart</strong> 
+                        to distinguish clays from silts.
+                    </p>
+                    <p>
+                        Soils plotting <strong>above the A-line</strong> (PI &gt; 0.73 × (LL − 20)) are classified as 
+                        <strong>Clays (C)</strong>, while those below are <strong>Silts (M)</strong>. A Liquid Limit of 50 
+                        separates Low (L) from High (H) plasticity.
+                    </p>
+
+                    <div class="logic-box">
+                        <div class="logic-label">Decision Logic</div>
+                        <pre><span class="kw">IF</span> % Passing #200 <span class="op">≥</span> <span class="val">50</span> <span class="cm">→ Fine-Grained Soil</span>
+  PI <span class="op">=</span> LL <span class="op">−</span> PL
+
+  <span class="kw">IF</span> LL <span class="op">≥</span> <span class="val">50</span> <span class="cm">→ High Plasticity (H)</span>
+  <span class="kw">ELSE</span>       <span class="cm">→ Low Plasticity (L)</span>
+
+  <span class="kw">IF</span> plots <span class="str">ABOVE</span> A-line <span class="cm">→ Clay (C)</span>
+  <span class="kw">ELSE</span>                  <span class="cm">→ Silt (M)</span></pre>
+                    </div>
+                </div>
+
+                <div class="detail-table-wrap">
+                    <div class="table-label">Output Classifications</div>
+                    <table class="classification-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Soil Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="symbol-badge clay">CH</span></td>
+                                <td style="font-weight:600;">High-Plasticity Clay</td>
+                                <td>Expansive, compressible — poor foundation material</td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge clay">CL</span></td>
+                                <td style="font-weight:600;">Low-Plasticity Clay</td>
+                                <td>Moderate plasticity, common subgrade soil</td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge silt">MH</span></td>
+                                <td style="font-weight:600;">High-Plasticity Silt</td>
+                                <td>Elastic, frost-susceptible</td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge silt">ML</span></td>
+                                <td style="font-weight:600;">Low-Plasticity Silt</td>
+                                <td>Low plasticity, frost-susceptible</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AASHTO Detail -->
+    <section id="aashto" class="detail-section" style="padding-top: 40px;">
+        <div class="container">
+            <div class="detail-grid">
+                <div class="detail-text">
+                    <h2>🟧 AASHTO Classification</h2>
+                    <span class="standard-badge aashto">AASHTO M 145</span>
+                    <p>
+                        The AASHTO system assesses soil suitability for use as <strong>road subgrade material</strong> 
+                        in pavement construction. It classifies soils on an A-scale from excellent (A-1) to very 
+                        poor (A-7-6).
+                    </p>
+                    <p>
+                        Groups A-1 through A-3 represent <strong>granular materials</strong> (excellent to good subgrade), 
+                        while A-4 through A-7-6 are <strong>silt-clay materials</strong> with progressively poorer 
+                        engineering properties.
+                    </p>
+                    <p>
+                        The model uses percentage passing sieve #200, Liquid Limit, and Plasticity Index to 
+                        evaluate boundary conditions for each AASHTO group sequentially.
+                    </p>
+                </div>
+
+                <div class="detail-table-wrap">
+                    <div class="table-label">Output Classifications</div>
+                    <table class="classification-table">
+                        <thead>
+                            <tr>
+                                <th>Group</th>
+                                <th>Description</th>
+                                <th>Quality</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="symbol-badge good">A-1</span></td>
+                                <td>Stone fragments, gravel, sand</td>
+                                <td><span class="star-rating">★★★<span class="dim">★</span></span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge good">A-2</span></td>
+                                <td>Silty or clayey gravel/sand</td>
+                                <td><span class="star-rating">★★★<span class="dim">★</span></span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge good">A-3</span></td>
+                                <td>Fine sand</td>
+                                <td><span class="star-rating">★★<span class="dim">★★</span></span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge fair">A-4</span></td>
+                                <td>Silty soil</td>
+                                <td><span class="star-rating">★★<span class="dim">★★</span></span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge poor">A-5</span></td>
+                                <td>Silty soil (elastic)</td>
+                                <td><span class="star-rating">★<span class="dim">★★★</span></span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge poor">A-6</span></td>
+                                <td>Clayey soil</td>
+                                <td><span class="star-rating">★<span class="dim">★★★</span></span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge bad">A-7-5</span></td>
+                                <td>Clayey soil (elastic)</td>
+                                <td><span class="star-rating">★<span class="dim">★★★</span></span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="symbol-badge bad">A-7-6</span></td>
+                                <td>Clayey soil (expansive)</td>
+                                <td><span class="star-rating">★<span class="dim">★★★</span></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Example Run -->
+    <section id="example">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">Worked Example</div>
+                <h2 class="section-title">Example Run</h2>
+                <p class="section-desc">A complete worked example using a high-plasticity clay sample.</p>
+            </div>
+
+            <div class="example-container">
+                <div class="example-header">
+                    <h3>🧪 Sample Analysis</h3>
+                    <span class="sample-type">High-Plasticity Clay</span>
+                </div>
+                <div class="example-body">
+                    <!-- Inputs -->
+                    <div class="example-col">
+                        <div class="example-col-label">📥 Inputs</div>
+                        <div class="example-input-row">
+                            <span class="example-input-name">% Passing #200</span>
+                            <span class="example-input-value">60%</span>
+                        </div>
+                        <div class="example-input-row">
+                            <span class="example-input-name">Liquid Limit (LL)</span>
+                            <span class="example-input-value">55</span>
+                        </div>
+                        <div class="example-input-row">
+                            <span class="example-input-name">Plastic Limit (PL)</span>
+                            <span class="example-input-value">28</span>
+                        </div>
+                        <div class="example-input-row">
+                            <span class="example-input-name">Plasticity Index (PI)</span>
+                            <span class="example-input-value">27</span>
+                        </div>
+                    </div>
+
+                    <!-- USCS Result -->
+                    <div class="example-col">
+                        <div class="example-col-label">🟦 USCS Output</div>
+                        <div class="example-result">
+                            <div class="example-result-symbol uscs">CH</div>
+                            <div class="example-result-name">High-Plasticity Clay</div>
+                            <div class="example-result-explain">
+                                LL = 55 &gt; 50 → High plasticity<br>
+                                PI = 27 → Above A-line → Clay
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AASHTO Result -->
+                    <div class="example-col">
+                        <div class="example-col-label">🟧 AASHTO Output</div>
+                        <div class="example-result">
+                            <div class="example-result-symbol aashto">A-7-6</div>
+                            <div class="example-result-name">Expansive Clayey Soil</div>
+                            <div class="example-result-explain">
+                                High fines + high LL + high PI<br>
+                                → Poorest subgrade category
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="text-align:center; margin-top: 28px; color: var(--text-secondary); font-size: 0.92rem;">
+                ✅ Both models correctly identify this as a <strong>high-plasticity clay</strong> — a soil type requiring 
+                careful treatment due to shrink-swell behavior and low bearing capacity.
+            </p>
+        </div>
+    </section>
+
+    <!-- Glossary -->
+    <section id="glossary">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">Reference</div>
+                <h2 class="section-title">Key Concepts Glossary</h2>
+                <p class="section-desc">Essential geotechnical terms used by both models.</p>
+            </div>
+            <div class="glossary-grid">
+                <div class="glossary-card">
+                    <div class="glossary-term">🔬 Sieve #200</div>
+                    <div class="glossary-def">0.075 mm opening — separates fine-grained from coarse-grained soils.</div>
+                </div>
+                <div class="glossary-card">
+                    <div class="glossary-term">💧 Liquid Limit (LL)</div>
+                    <div class="glossary-def">Water content at which soil transitions from plastic to liquid state.</div>
+                </div>
+                <div class="glossary-card">
+                    <div class="glossary-term">🧱 Plastic Limit (PL)</div>
+                    <div class="glossary-def">Water content below which soil behaves as a semi-solid.</div>
+                </div>
+                <div class="glossary-card">
+                    <div class="glossary-term">📊 Plasticity Index (PI)</div>
+                    <div class="glossary-def">PI = LL − PL; measures the range of plastic behavior.</div>
+                </div>
+                <div class="glossary-card">
+                    <div class="glossary-term">📈 A-line</div>
+                    <div class="glossary-def">Boundary on the Casagrande plasticity chart separating clays (C) from silts (M).</div>
+                </div>
+                <div class="glossary-card">
+                    <div class="glossary-term">🟦 USCS</div>
+                    <div class="glossary-def">Unified Soil Classification System — general geotechnical use worldwide.</div>
+                </div>
+                <div class="glossary-card">
+                    <div class="glossary-term">🟧 AASHTO</div>
+                    <div class="glossary-def">American Association of State Highway and Transportation Officials standard.</div>
+                </div>
+                <div class="glossary-card">
+                    <div class="glossary-term">🛣️ Subgrade</div>
+                    <div class="glossary-def">The native soil layer on which road pavement structure is constructed.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Getting Started -->
+    <section id="start">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">Quick Start</div>
+                <h2 class="section-title">Get Started in Minutes</h2>
+                <p class="section-desc">Clone, open, set inputs, and run.</p>
+            </div>
+
+            <div class="steps-timeline">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <h4>Check Prerequisites</h4>
+                    <p>Make sure you have <strong>MATLAB R2023b+</strong> with <strong>Simulink</strong> installed.</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <h4>Clone the Repository</h4>
+                    <p>Download or clone the repo to your local machine.</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <h4>Open a Model</h4>
+                    <p>Navigate to <code>USCS_Model/</code> or <code>AASHTO_Model/</code> and open the <code>.slx</code> file.</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <h4>Set Inputs & Run</h4>
+                    <p>Double-click the Constant blocks to set your lab values, then hit ▶ Run.</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="cm"># Clone the repository</span>
+<span class="cmd">git clone</span> <span class="str">https://github.com/Ahmad-Akram7/Simulink-Soil-Classification.git</span>
+<span class="cmd">cd</span> Simulink-Soil-Classification
+
+<span class="cm">% Open the USCS model</span>
+<span class="kw">open</span>(<span class="str">'USCS_Model/USCS_Soil_Model.slx'</span>)
+
+<span class="cm">% Or the AASHTO model</span>
+<span class="kw">open</span>(<span class="str">'AASHTO_Model/AASHTO_Soil_Model.slx'</span>)
+
+<span class="cm">% Set your inputs in the Constant blocks:</span>
+<span class="cm">%   - PercentPassing200  (e.g., 60)</span>
+<span class="cm">%   - LiquidLimit        (e.g., 55)</span>
+<span class="cm">%   - PlasticLimit       (e.g., 28)</span>
+
+<span class="cm">% Hit ▶ Run — classification appears in the Display block</span></pre>
+            </div>
+
+            <!-- Repo Structure -->
+            <div style="margin-top: 48px;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; text-align: center;">📁 Repository Structure</h3>
+                <div class="tree-block">
+<span class="folder">Simulink-Soil-Classification/</span>
+│
+├── <span class="folder">📁 USCS_Model/</span>
+│   └── <span class="file">USCS_Soil_Model.slx</span>          <span class="desc"># USCS Simulink model</span>
+│
+├── <span class="folder">📁 AASHTO_Model/</span>
+│   └── <span class="file">AASHTO_Soil_Model.slx</span>        <span class="desc"># AASHTO Simulink model</span>
+│
+├── <span class="folder">📁 Report/</span>
+│   ├── <span class="file">USCS MODEL.png</span>               <span class="desc"># USCS model screenshot</span>
+│   └── <span class="file">AASHTO MODEL.png</span>             <span class="desc"># AASHTO model screenshot</span>
+│
+├── <span class="file">LICENSE</span>                          <span class="desc"># MIT License</span>
+└── <span class="file">README.md</span>                        <span class="desc"># Documentation</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contributing -->
+    <section id="contribute">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">Open Source</div>
+                <h2 class="section-title">Contribute</h2>
+                <p class="section-desc">Ideas to extend the project and make it even better.</p>
+            </div>
+            <div class="contribute-grid">
+                <div class="contribute-card">
+                    <h4>🪨 Coarse-Grained USCS</h4>
+                    <p>Add GW, GP, SW, SP classification for coarse-grained soils.</p>
+                </div>
+                <div class="contribute-card">
+                    <h4>📊 Group Index (GI)</h4>
+                    <p>Extend AASHTO model to include Group Index calculation.</p>
+                </div>
+                <div class="contribute-card">
+                    <h4>📓 Live Script Companion</h4>
+                    <p>Add a MATLAB Live Script for step-by-step walkthroughs.</p>
+                </div>
+                <div class="contribute-card">
+                    <h4>🖥️ App Designer GUI</h4>
+                    <p>Create a standalone GUI for non-Simulink users.</p>
+                </div>
+                <div class="contribute-card">
+                    <h4>⚠️ Input Validation</h4>
+                    <p>Add validation blocks for out-of-range or invalid values.</p>
+                </div>
+                <div class="contribute-card">
+                    <h4>📈 Plasticity Chart</h4>
+                    <p>Visualize the Casagrande chart with the sample plotted on it.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-box">
+                <h2>Ready to Classify Your Soil?</h2>
+                <p>Clone the repo, open it in Simulink, and get standardized soil classifications in seconds.</p>
+                <div class="cta-actions">
+                    <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification" class="btn btn-primary" target="_blank">
+                        🚀 View Repository
+                    </a>
+                    <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification/releases" class="btn btn-secondary" target="_blank">
+                        📦 Download Release
+                    </a>
+                    <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification/archive/refs/heads/main.zip" class="btn btn-secondary">
+                        📥 Download ZIP
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification" target="_blank">GitHub</a>
+                <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification/issues" target="_blank">Issues</a>
+                <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification/pulls" target="_blank">Pull Requests</a>
+                <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification/wiki" target="_blank">Wiki</a>
+                <a href="https://github.com/Ahmad-Akram7/Simulink-Soil-Classification/releases" target="_blank">Releases</a>
+            </div>
+            <p class="footer-copy">
+                Built with <span class="footer-heart">☕</span> and a deep appreciation for geotechnical engineering
+                <br>
+                © 2025 Ahmad Akram · MIT License
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Navbar scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Mobile toggle
+        const mobileToggle = document.getElementById('mobileToggle');
+        const navLinks = document.getElementById('navLinks');
+        mobileToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('open');
+            mobileToggle.textContent = navLinks.classList.contains('open') ? '✕' : '☰';
+        });
+
+        // Close mobile on link click
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('open');
+                mobileToggle.textContent = '☰';
+            });
+        });
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.08,
+            rootMargin: '0px 0px -60px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        const animateSelectors = [
+            '.model-card', '.glossary-card', '.contribute-card',
+            '.step-item', '.example-container', '.input-table-wrap',
+            '.flow-section', '.detail-grid', '.logic-box', '.tree-block',
+            '.code-block', '.cta-box'
+        ];
+
+        animateSelectors.forEach(sel => {
+            document.querySelectorAll(sel).forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+                observer.observe(el);
+            });
+        });
+    </script>
+</body>
+</html>
